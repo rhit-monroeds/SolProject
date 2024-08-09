@@ -7,6 +7,8 @@ app = Flask(__name__)
 # Constants
 CEX_ACTIVITY_TYPE = "ACTIVITY_SPL_TRANSFER"
 CEX_PG_SZ = 100
+DEX_ACTIVITY_TYPE = "ACTIVITY_SPL_TRANSFER"
+DEX_PG_SZ = 100
 NATIVE_SOLANA = "So11111111111111111111111111111111111111111"
 
 # Globals
@@ -52,7 +54,35 @@ def cex_checkout():
 
 # analyze the transfers of wallet until the desired block_time is reached
 def wallet_checkout(wallet, check_until):
-    print(wallet)
+    pg = 1
+    flag = 1
+    while flag:
+        api_call = "https://pro-api.solscan.io/v2.0/account/transfer?address=" + wallet + "&activity_type[]=" + DEX_ACTIVITY_TYPE + "&token=" + NATIVE_SOLANA + "&flow=out&page=" + str(pg) + "&page_size=" + str(DEX_PG_SZ)
+        pg += 1
+        response = requests.get(api_call, headers=headers)
+        if not response:
+            raise Exception(f"Non-success status code: {response.status_code}")
+        data = response.json()["data"]
+        for transfer in data:
+            big_buy = 0
+            transaction_id = transfer["trans_id"]
+            api_tx_call = "https://pro-api.solscan.io/v2.0/transaction/actions?tx=" + transaction_id
+            tx_response = requests.get(api_tx_call, headers=headers)
+            if not tx_response:
+                raise Exception(f"Non-success status code: {tx_response.status_code}")
+            tx = tx_response.json()["data"]
+            if tx["block_time"] < check_until:
+                swaps = tx["transfers"]
+                for swap in swaps:
+                    if swap["transfer_type"] == DEX_ACTIVITY_TYPE:
+                        if swap["token_address"] == NATIVE_SOLANA:
+                            if swap["amount"] / 10 ** swap["decimals"] > 4.9:
+                                big_buy = 1
+                        elif big_buy == 1:
+                            # made a big buy, now we're in the swap for the potential insider token              
+            else:
+                flag = 0
+                break
     return
 
 def main():
