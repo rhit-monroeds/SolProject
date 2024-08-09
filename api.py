@@ -12,11 +12,12 @@ DEX_PG_SZ = 100
 NATIVE_SOLANA = "So11111111111111111111111111111111111111111"
 
 # Globals
-twenty_four_hours_ago_timestamp = int((datetime.now() - timedelta(hours=24)).timestamp())
 headers = {"token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjcmVhdGVkQXQiOjE3MjMxNzE0NTQ0MjgsImVtYWlsIjoiZGVhbm1vbnJvZTI4QGdtYWlsLmNvbSIsImFjdGlvbiI6InRva2VuLWFwaSIsImFwaVZlcnNpb24iOiJ2MiIsImlhdCI6MTcyMzE3MTQ1NH0.CbKikRboPJ8jgkLPskpAOGpOQ2nuppiXyRcQ7oWln-8"}
+potential_insider_tokens = {}
 
 # tokens to ignore
-ignore = []
+# wrapped Sol, WIF, POPCAT, MEW, PONKE, $michi, WOLF, BILLY, aura, FWOG, PGN, wDOG, MUMU, DOG, MOTHER, SCF, GINNAN, DADDY
+ignore = ["So11111111111111111111111111111111111111112", "21AErpiB8uSb94oQKRcwuHqyHF93njAxBSbdUrpupump", "7GCihgDB8fe6KNjn2MYtkzZcRjQy3t9GHdC8uHYmW2hr", "MEW1gQWJ3nEXg2qgERiKu7FAFj79PHvQVREQUzScPP5", "5z3EqYQo9HiCEs3R84RCDMu2n7anpDMxRhdK8PSWmrRC", "5mbK36SZ7J19An8jFochhQS4of8g6BwUjbeCSxBSoWdp", "Faf89929Ni9fbg4gmVZTca7eW6NFg877Jqn6MizT3Gvw", "3B5wuUrMEi5yATD7on46hKfej3pfmd7t1RKgrsN3pump", "DtR4D9FtVoTX2569gaL837ZgrB6wNjj6tkmnX9Rdk9B2", "A8C3xuqscfmyLrte3VmTqrAq8kgMASius9AFNANwpump", "2Vnei1LAmrBpbL8fNCiCpaYcQTCSodiE51wab6qaQJAq", "GYKmdfcUmZVrqfcH1g579BGjuzSRijj3LBuwv79rpump", "5LafQUrVco6o7KMz42eqVEJ9LW31StPyGjeeu5sKoMtA", "CATTzAwLyADd2ekzVjTjX8tVUBYfrozdkJBkutJggdB7", "3S8qX1MsMqRbiwKg2cQyx7nis1oHMgaCuc9c4VfvVdPN", "GiG7Hr61RVm4CSUxJmgiCoySFQtdiwxtqf64MsRppump", "GinNabffZL4fUj9Vactxha74GDAW8kDPGaHqMtMzps2f", "4Cnk9EPnW5ixfLZatCPJjDB1PUtcRpVVgTQukm9epump"]
 
 # CEX Wallets
 random_1 = "G2YxRa6wt1qePMwfJzdXZG62ej4qaTC7YURzuh2Lwd3t"
@@ -34,6 +35,7 @@ wallets = [random_1, random_2, cb_hot, cb_1, bybit, binance_2]
 
 def cex_checkout():
     for wallet in wallets:
+        print("checking " + wallet)
         pg = 1
         while 1:
             api_call = "https://pro-api.solscan.io/v2.0/account/transfer?address=" + wallet + "&activity_type[]=" + CEX_ACTIVITY_TYPE + "&token=" + NATIVE_SOLANA + "&flow=out&page=" + str(pg) + "&page_size=" + str(CEX_PG_SZ)
@@ -42,9 +44,7 @@ def cex_checkout():
             if not response:
                 raise Exception(f"Non-success status code: {response.status_code}")
             data = response.json()["data"]
-            if data[CEX_PG_SZ-1]["block_time"] < twenty_four_hours_ago_timestamp:
-                #print("data is now older than 24 hrs")
-                #print(data[CEX_PG_SZ-1])
+            if data[CEX_PG_SZ-1]["block_time"] < int((datetime.now() - timedelta(minutes=20)).timestamp()):
                 break
             # we have data < 24 hrs old
             for transfer in data:
@@ -56,6 +56,7 @@ def cex_checkout():
 def wallet_checkout(wallet, check_until):
     pg = 1
     flag = 1
+    viewed_tokens = {}
     while flag:
         api_call = "https://pro-api.solscan.io/v2.0/account/transfer?address=" + wallet + "&activity_type[]=" + DEX_ACTIVITY_TYPE + "&token=" + NATIVE_SOLANA + "&flow=out&page=" + str(pg) + "&page_size=" + str(DEX_PG_SZ)
         pg += 1
@@ -63,6 +64,8 @@ def wallet_checkout(wallet, check_until):
         if not response:
             raise Exception(f"Non-success status code: {response.status_code}")
         data = response.json()["data"]
+        if len(data) == 0:
+            break
         for transfer in data:
             big_buy = 0
             transaction_id = transfer["trans_id"]
@@ -71,7 +74,7 @@ def wallet_checkout(wallet, check_until):
             if not tx_response:
                 raise Exception(f"Non-success status code: {tx_response.status_code}")
             tx = tx_response.json()["data"]
-            if tx["block_time"] < check_until:
+            if tx["block_time"] > check_until:
                 swaps = tx["transfers"]
                 for swap in swaps:
                     if swap["transfer_type"] == DEX_ACTIVITY_TYPE:
@@ -79,27 +82,23 @@ def wallet_checkout(wallet, check_until):
                             if swap["amount"] / 10 ** swap["decimals"] > 4.9:
                                 big_buy = 1
                         elif big_buy == 1:
-                            # made a big buy, now we're in the swap for the potential insider token              
+                            # made a big buy, now we're in the swap for the potential insider token     
+                            if swap["token_address"] not in ignore and viewed_tokens.get(swap["token_address"], 0) == 0:
+                                potential_insider_tokens[swap["token_address"]] = potential_insider_tokens.get(swap["token_address"], 0) + 1
+                                viewed_tokens[swap["token_address"]] = viewed_tokens.get(swap["token_address"], 0) + 1
             else:
                 flag = 0
                 break
     return
 
-def main():
+if __name__ == "__main__":
     cex_checkout()
-
+    print(potential_insider_tokens)
     # set up Flask to view data better
     @app.route("/")
     def display_data():
-        data = {
-            "hi": 1,
-        }
+        output = dict(sorted(potential_insider_tokens.items(), key=lambda item: item[1], reverse=True))
         # Render the data as a pretty-printed JSON string
-        html_content = "<html><body><h1>Data Output</h1><pre>{}</pre></body></html>".format(data)
+        html_content = "<html><body><h1>Data Output</h1><pre>{}</pre></body></html>".format(output)
         return render_template_string(html_content)
-
-    if __name__ == "__main__":
-        app.run(debug=True)
-
-main()
-
+    app.run(debug=True)
