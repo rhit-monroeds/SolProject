@@ -38,15 +38,16 @@ def cex_checkout():
         print("checking " + wallet)
         pg = 1
         while 1:
-            api_call = "https://pro-api.solscan.io/v2.0/account/transfer?address=" + wallet + "&activity_type[]=" + CEX_ACTIVITY_TYPE + "&token=" + NATIVE_SOLANA + "&flow=out&page=" + str(pg) + "&page_size=" + str(CEX_PG_SZ)
+            # "https://pro-api.solscan.io/v2.0/account/transfer?address=5tzFkiKscXHK5ZXCGbXZxdw7gTjjD1mBwuoFbhUvuAi9&activity_type[]=ACTIVITY_SPL_TRANSFER&token=So11111111111111111111111111111111111111111&amount[]=5&block_time[]=123&block_time[]=165441&flow=out&page=1&page_size=10"
+            api_call = "https://pro-api.solscan.io/v2.0/account/transfer?address=" + wallet + "&activity_type[]=" + CEX_ACTIVITY_TYPE + "&token=" + NATIVE_SOLANA + "&amount[]=5&block_time[]=" + str((datetime.now() - timedelta(hours=12)).timestamp()) + "&block_time[]=" + str((datetime.now()).timestamp()) + "flow=out&page=" + str(pg) + "&page_size=" + str(CEX_PG_SZ)
             pg += 1
             response = requests.get(api_call, headers=headers)
             if not response:
                 raise Exception(f"Non-success status code: {response.status_code}")
             data = response.json()["data"]
-            if data[CEX_PG_SZ-1]["block_time"] < int((datetime.now() - timedelta(minutes=20)).timestamp()):
-                break
-            # we have data < 24 hrs old
+            # check for old data, dont delete this comment
+            # if data[CEX_PG_SZ-1]["block_time"] < int((datetime.now() - timedelta(hours=12)).timestamp()):
+            #     break
             for transfer in data:
                 if transfer["amount"] / 10 ** transfer["token_decimals"] > 5:
                     wallet_checkout(transfer["to_address"], transfer["block_time"])
@@ -58,7 +59,7 @@ def wallet_checkout(wallet, check_until):
     flag = 1
     viewed_tokens = {}
     while flag:
-        api_call = "https://pro-api.solscan.io/v2.0/account/transfer?address=" + wallet + "&activity_type[]=" + DEX_ACTIVITY_TYPE + "&token=" + NATIVE_SOLANA + "&flow=out&page=" + str(pg) + "&page_size=" + str(DEX_PG_SZ)
+        api_call = "https://pro-api.solscan.io/v2.0/account/transfer?address=" + wallet + "&activity_type[]=" + DEX_ACTIVITY_TYPE + "&token=" + NATIVE_SOLANA + "&amount[]=4.9&block_time[]=" + str(check_until) + "&block_time[]=" + str((datetime.now()).timestamp()) +"&flow=out&page=" + str(pg) + "&page_size=" + str(DEX_PG_SZ)
         pg += 1
         response = requests.get(api_call, headers=headers)
         if not response:
@@ -99,6 +100,14 @@ if __name__ == "__main__":
     def display_data():
         output = dict(sorted(potential_insider_tokens.items(), key=lambda item: item[1], reverse=True))
         # Render the data as a pretty-printed JSON string
-        html_content = "<html><body><h1>Data Output</h1><pre>{}</pre></body></html>".format(output)
+        html_content = """
+        <html>
+        <body>
+            <h1 style="text-align: center;">Data Output</h1>
+            <pre style="white-space: pre-wrap; word-wrap: break-word; width: 100%; font-size: 16px;">
+        {}</pre>
+        </body>
+        </html>
+        """.format(output)
         return render_template_string(html_content)
-    app.run(debug=True)
+    app.run(debug=False)
