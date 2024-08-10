@@ -1,6 +1,7 @@
 import requests
 from datetime import datetime, timedelta
 from flask import Flask, render_template_string
+from collections import defaultdict
 
 app = Flask(__name__)
 
@@ -10,11 +11,13 @@ CEX_PG_SZ = 100
 DEX_ACTIVITY_TYPE = "ACTIVITY_SPL_TRANSFER"
 DEX_PG_SZ = 100
 NATIVE_SOLANA = "So11111111111111111111111111111111111111111"
-MIN_SOL = 5
+MIN_SOL = 10
+TIME_OFFSET = 24
 
 # Globals
 headers = {"token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjcmVhdGVkQXQiOjE3MjMxNzE0NTQ0MjgsImVtYWlsIjoiZGVhbm1vbnJvZTI4QGdtYWlsLmNvbSIsImFjdGlvbiI6InRva2VuLWFwaSIsImFwaVZlcnNpb24iOiJ2MiIsImlhdCI6MTcyMzE3MTQ1NH0.CbKikRboPJ8jgkLPskpAOGpOQ2nuppiXyRcQ7oWln-8"}
 potential_insider_tokens = {}
+insider_wallets = defaultdict(list)
 
 # tokens to ignore
 # wrapped Sol, WIF, POPCAT, MEW, PONKE, $michi, WOLF, BILLY, aura, FWOG, PGN, wDOG, MUMU, DOG, MOTHER, SCF, GINNAN, DADDY, USDC, DMAGA
@@ -40,14 +43,12 @@ def cex_checkout():
         pg = 1
         while 1:
             # "https://pro-api.solscan.io/v2.0/account/transfer?address=5tzFkiKscXHK5ZXCGbXZxdw7gTjjD1mBwuoFbhUvuAi9&activity_type[]=ACTIVITY_SPL_TRANSFER&token=So11111111111111111111111111111111111111111&amount[]=5&block_time[]=123&block_time[]=165441&flow=out&page=1&page_size=10"
-            api_call = "https://pro-api.solscan.io/v2.0/account/transfer?address=" + wallet + "&activity_type[]=" + CEX_ACTIVITY_TYPE + "&token=" + NATIVE_SOLANA + "&amount[]=" + str(MIN_SOL) + "&block_time[]=" + str((datetime.now() - timedelta(hours=12)).timestamp()) + "&block_time[]=" + str((datetime.now()).timestamp()) + "flow=out&page=" + str(pg) + "&page_size=" + str(CEX_PG_SZ)
+            api_call = "https://pro-api.solscan.io/v2.0/account/transfer?address=" + wallet + "&activity_type[]=" + CEX_ACTIVITY_TYPE + "&token=" + NATIVE_SOLANA + "&amount[]=" + str(MIN_SOL) + "&block_time[]=" + str((datetime.now() - timedelta(hours=TIME_OFFSET)).timestamp()) + "&block_time[]=" + str((datetime.now()).timestamp()) + "flow=out&page=" + str(pg) + "&page_size=" + str(CEX_PG_SZ)
             pg += 1
             response = requests.get(api_call, headers=headers)
             if not response:
                 raise Exception(f"Non-success status code: {response.status_code}")
             data = response.json()["data"]
-            print(data)
-            print(len(data))
             if len(data) == 0:
                 break
             # check for old data, dont delete this comment
@@ -61,11 +62,11 @@ def cex_checkout():
 
 # analyze the transfers of wallet until the desired block_time is reached
 def wallet_checkout(wallet, check_until):
-    pg = 1
-    flag = 1
-    viewed_tokens = {}
+    # pg = 1
+    # flag = 1
+    # viewed_tokens = {}
     # while flag:
-    api_call = "https://pro-api.solscan.io/v2.0/account/transfer?address=" + wallet + "&activity_type[]=" + DEX_ACTIVITY_TYPE + "&block_time[]=" + str(check_until) + "&block_time[]=" + str((datetime.now()).timestamp()) +"&page=" + str(pg) + "&page_size=" + str(DEX_PG_SZ)
+    api_call = "https://pro-api.solscan.io/v2.0/account/transfer?address=" + wallet + "&activity_type[]=" + DEX_ACTIVITY_TYPE + "&block_time[]=" + str(check_until) + "&block_time[]=" + str((datetime.now()).timestamp()) +"&page=1&page_size=" + str(DEX_PG_SZ)
     # pg += 1
     response = requests.get(api_call, headers=headers)
     if not response:
@@ -79,9 +80,10 @@ def wallet_checkout(wallet, check_until):
         if transfer["token_address"] == NATIVE_SOLANA and transfer["flow"] == "out" and transfer["amount"] / 10 ** transfer["token_decimals"] > (MIN_SOL - 0.1):
             tid = transfer["trans_id"]
         elif transfer["flow"] == "in" and transfer["trans_id"] == tid and transfer["token_address"] not in ignore:
-            if viewed_tokens.get(transfer["token_address"], 0) == 0:
-                potential_insider_tokens[transfer["token_address"]] = potential_insider_tokens.get(transfer["token_address"], 0) + 1
-                viewed_tokens[transfer["token_address"]] = viewed_tokens.get(transfer["token_address"], 0) + 1
+            potential_insider_tokens[transfer["token_address"]] = potential_insider_tokens.get(transfer["token_address"], 0) + 1
+            insider_wallets[transfer["token_address"]].append(transfer["to_address"]) 
+            break
+                # viewed_tokens[transfer["token_address"]] = viewed_tokens.get(transfer["token_address"], 0) + 1
     # flag it and look at next transaction which should be buying the token
     # can compare tx address to make sure it's a swap not 2 seperate transfers
     # if all looks good, save it in potential insider token array
@@ -127,14 +129,18 @@ if __name__ == "__main__":
             <h1 style="text-align: center;">Data Output</h1>
             
             <h2 style="text-align: center;">Potential Insider Tokens</h2>
-            <pre style="white-space: pre-wrap; word-wrap: break-word; width: 90%; font-size: 16px;">
-            {}</pre>
+            <div style="margin-bottom: 20px;">
+            {% for key, value in data.items() %}
+                <p>{{ key }}: {{ value }}</p>
+                <p>{{ iw[key] }}</p>
+            {% endfor %}
+            </div>
             
         </body>
         </html>
-        """.format(output)
+        """
             # <h2 style="text-align: center;">Other Data Set</h2>
             # <pre style="white-space: pre-wrap; word-wrap: break-word; width: 90%; font-size: 16px;">
             # {}</pre>
-        return render_template_string(html_content)
+        return render_template_string(html_content, data=output, iw=insider_wallets)
     app.run(debug=False)
