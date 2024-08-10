@@ -55,17 +55,19 @@ def cex_checkout():
                 break
             for transfer in data:
                 # can probably remove this since API call is specific
-                if transfer["amount"] / 10 ** transfer["token_decimals"] > MIN_SOL:
-                    wallet_checkout(transfer["to_address"], transfer["block_time"])
+                if transfer["to_address"] not in wallets and transfer["amount"] / 10 ** transfer["token_decimals"] > MIN_SOL:
+                    wallet_checkout(transfer["to_address"])
     return
 
 # analyze the transfers of wallet until the desired block_time is reached
-def wallet_checkout(wallet, check_until):
-    api_call = "https://pro-api.solscan.io/v2.0/account/transfer?address=" + wallet + "&activity_type[]=" + DEX_ACTIVITY_TYPE + "&block_time[]=" + str(check_until) + "&block_time[]=" + str((datetime.now()).timestamp()) +"&page=1&page_size=" + str(DEX_PG_SZ)
+def wallet_checkout(wallet):
+    api_call = "https://pro-api.solscan.io/v2.0/account/transfer?address=" + wallet + "&activity_type[]=" + DEX_ACTIVITY_TYPE + "&page=1&page_size=" + str(DEX_PG_SZ)
     response = requests.get(api_call, headers=headers)
     if not response:
         raise Exception(f"Non-success status code: {response.status_code}")
     data = response.json()["data"]
+    if len(data) > 50:
+        return
     # reverse data
     data = data[::-1]
     # traverse data and look for transfers of Solana greater than 4.9
