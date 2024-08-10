@@ -37,6 +37,7 @@ def cex_checkout():
     for wallet in wallets:
         print("checking " + wallet)
         pg = 1
+        # add a break
         while 1:
             # "https://pro-api.solscan.io/v2.0/account/transfer?address=5tzFkiKscXHK5ZXCGbXZxdw7gTjjD1mBwuoFbhUvuAi9&activity_type[]=ACTIVITY_SPL_TRANSFER&token=So11111111111111111111111111111111111111111&amount[]=5&block_time[]=123&block_time[]=165441&flow=out&page=1&page_size=10"
             api_call = "https://pro-api.solscan.io/v2.0/account/transfer?address=" + wallet + "&activity_type[]=" + CEX_ACTIVITY_TYPE + "&token=" + NATIVE_SOLANA + "&amount[]=5&block_time[]=" + str((datetime.now() - timedelta(hours=12)).timestamp()) + "&block_time[]=" + str((datetime.now()).timestamp()) + "flow=out&page=" + str(pg) + "&page_size=" + str(CEX_PG_SZ)
@@ -45,12 +46,14 @@ def cex_checkout():
             if not response:
                 raise Exception(f"Non-success status code: {response.status_code}")
             data = response.json()["data"]
+            print(data)
             # check for old data, dont delete this comment
             # if data[CEX_PG_SZ-1]["block_time"] < int((datetime.now() - timedelta(hours=12)).timestamp()):
             #     break
             for transfer in data:
                 if transfer["amount"] / 10 ** transfer["token_decimals"] > 5:
                     wallet_checkout(transfer["to_address"], transfer["block_time"])
+    print("list so far: " + potential_insider_tokens)
     return
 
 # analyze the transfers of wallet until the desired block_time is reached
