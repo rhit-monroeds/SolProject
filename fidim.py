@@ -10,6 +10,7 @@ MIN_SOL = 9
 # Globals
 potential_insider_tokens = {}
 insider_wallets = defaultdict(list)
+bt = (datetime.now() - timedelta(hours=24)).timestamp()
 # Set the Solana RPC endpoint
 solana_endpoint = 'https://nd-923-390-846.p2pify.com/39df60dcfd8e7e0dd597695da0d2d97d'
 
@@ -85,16 +86,17 @@ def get_transaction_details(signature):
 def analyze_transactions(address):
     last_signature = None
     sol_transfers = []
+    done = 0
 
-    while True:
+    while not done:
         signatures = get_signatures_for_address(address, last_signature)
         if not signatures:
             break  # No more transactions to fetch
 
         for signature_data in signatures:
             transaction_detail = get_transaction_details(signature_data['signature'])
-            print("transaction detail")
-            print(transaction_detail)
+            # print("transaction detail")
+            # print(transaction_detail)
             transaction = transaction_detail.get('transaction', {})
             message = transaction.get('message', {})
 
@@ -105,18 +107,19 @@ def analyze_transactions(address):
                         info = parsed.get('info', {})
                         sols = info['lamports'] / 10**9
                         if sols > MIN_SOL:
+                            print({'recipient': info['destination'], 'amount': sols, 'signature': signature_data['signature']}, bt, transaction_detail.get('blockTime'))
                             sol_transfers.append({'recipient': info['destination'], 'amount': sols, 'signature': signature_data['signature']})
             
             last_signature = signature_data['signature']  # Update to fetch the next batch
-            print("last signature")
             block_time = transaction_detail.get('blockTime')
-            print(block_time)
-            print(last_signature)
+            if block_time < bt:
+                done = 1
 
     return sol_transfers
 
 # Running the analysis and printing the results
 for wallet in wallets:
+    print("analyzing " + wallet)
     results = analyze_transactions(wallet)
     for result in results:
         print(f"Recipient: {result['recipient']}, Amount: {result['amount']} SOLs, Signature: {result['signature']}")
