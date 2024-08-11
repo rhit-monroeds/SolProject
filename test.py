@@ -17,7 +17,7 @@ START_TEST = 1723035810
 END_TEST = 1723122210
 
 # Globals
-headers = {"token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjcmVhdGVkQXQiOjE3MjMzMTM0OTI0NTQsImVtYWlsIjoiZGVhbm1vbnJvZTI4QGdtYWlsLmNvbSIsImFjdGlvbiI6InRva2VuLWFwaSIsImFwaVZlcnNpb24iOiJ2MiIsImlhdCI6MTcyMzMxMzQ5Mn0.W_Rxy3Jcv4yhc-YcEg5Lj2W2HbjoPKGo81UEama0Dpc"}
+headers = {"token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjcmVhdGVkQXQiOjE3MjMzMjQyOTA0MTIsImVtYWlsIjoiZGVhbm1vbnJvZTI4QGdtYWlsLmNvbSIsImFjdGlvbiI6InRva2VuLWFwaSIsImFwaVZlcnNpb24iOiJ2MiIsImlhdCI6MTcyMzMyNDI5MH0.ZDXFw2b5rkXfB8RnCVFC9cIZCoyX4RTZi-zi_mgXFJI"}
 potential_insider_tokens = {}
 insider_wallets = defaultdict(list)
 

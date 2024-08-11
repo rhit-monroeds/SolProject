@@ -15,7 +15,7 @@ MIN_SOL = 10
 TIME_OFFSET = 24
 
 # Globals
-headers = {"token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjcmVhdGVkQXQiOjE3MjMzMTM0OTI0NTQsImVtYWlsIjoiZGVhbm1vbnJvZTI4QGdtYWlsLmNvbSIsImFjdGlvbiI6InRva2VuLWFwaSIsImFwaVZlcnNpb24iOiJ2MiIsImlhdCI6MTcyMzMxMzQ5Mn0.W_Rxy3Jcv4yhc-YcEg5Lj2W2HbjoPKGo81UEama0Dpc"}
+headers = {"token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjcmVhdGVkQXQiOjE3MjMzMjQyOTA0MTIsImVtYWlsIjoiZGVhbm1vbnJvZTI4QGdtYWlsLmNvbSIsImFjdGlvbiI6InRva2VuLWFwaSIsImFwaVZlcnNpb24iOiJ2MiIsImlhdCI6MTcyMzMyNDI5MH0.ZDXFw2b5rkXfB8RnCVFC9cIZCoyX4RTZi-zi_mgXFJI"}
 potential_insider_tokens = {}
 insider_wallets = defaultdict(list)
 
@@ -54,8 +54,7 @@ def cex_checkout():
             if len(data) == 0:
                 break
             for transfer in data:
-                # can probably remove this since API call is specific
-                if transfer["amount"] / 10 ** transfer["token_decimals"] > MIN_SOL:
+                if transfer["to_address"] not in wallets:
                     wallet_checkout(transfer["to_address"], transfer["block_time"])
     return
 
