@@ -87,8 +87,11 @@ def wallet_checkout(wallet):
     return
 
 if __name__ == "__main__":
+    start_time = time.time()
     cex_checkout()
+    end_time = time.time()
     print(potential_insider_tokens)
+    print(end_time - start_time)
     # set up Flask to view data better
     @app.route("/")
     def display_data():
