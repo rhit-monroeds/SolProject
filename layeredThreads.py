@@ -14,12 +14,12 @@ DEX_ACTIVITY_TYPE = "ACTIVITY_SPL_TRANSFER"
 DEX_PG_SZ = 100
 NATIVE_SOLANA = "So11111111111111111111111111111111111111111"
 MIN_SOL = 9
-TIME_OFFSET = 5
+TIME_OFFSET = 24
 
 # Globals
 headers = {"token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjcmVhdGVkQXQiOjE3MjMzNDc4ODIwMjcsImVtYWlsIjoiZGVhbm1vbnJvZTI4QGdtYWlsLmNvbSIsImFjdGlvbiI6InRva2VuLWFwaSIsImFwaVZlcnNpb24iOiJ2MiIsImlhdCI6MTcyMzM0Nzg4Mn0.MeqTvUGP6HXZCC-jfQE5zJOVq0qRmnxQwbwLBDLFWGE"}
 potential_insider_tokens = {}
-insider_wallets = defaultdict(list)
+insider_wallets = defaultdict(set)
 
 # tokens to ignore
 # wrapped Sol, WIF, POPCAT, MEW, PONKE, $michi, WOLF, BILLY, aura, FWOG, PGN, wDOG, MUMU, DOG, MOTHER, SCF, GINNAN, DADDY, USDC, DMAGA, NEIRO, $WIF, Jupiter, Jupiter, BTW, USDT, NOS, JitoSOL, NUGGIES, UWU, Jupiter, Neiro, mSOL, Bonk
@@ -57,7 +57,7 @@ def cex_checkout():
                 data = response.json()["data"]
                 if len(data) == 0:
                     break
-                with ThreadPoolExecutor(max_workers=2) as executor:
+                with ThreadPoolExecutor(max_workers=10) as executor:
                     futures = []
                     for transfer in data:
                         if transfer["to_address"] not in wallets:
@@ -84,14 +84,16 @@ def wallet_checkout(wallet):
             tid = transfer["trans_id"]
         elif transfer["flow"] == "in" and transfer["trans_id"] == tid and transfer["token_address"] not in ignore:
             potential_insider_tokens[transfer["token_address"]] = potential_insider_tokens.get(transfer["token_address"], 0) + 1
-            if transfer["to_address"] not in insider_wallets["token_address"]:
-                insider_wallets[transfer["token_address"]].append(transfer["to_address"]) 
+            insider_wallets[transfer["token_address"]].add(transfer["to_address"]) 
             break
     return
 
 if __name__ == "__main__":
+    start_time = time.time()
     cex_checkout()
+    end_time = time.time()
     print(potential_insider_tokens)
+    print(end_time - start_time)
     # set up Flask to view data better
     @app.route("/")
     def display_data():
@@ -106,12 +108,14 @@ if __name__ == "__main__":
             <div style="margin-bottom: 20px;">
             {% for key, value in data.items() %}
                 <p>{{ key }}: {{ value }}</p>
-                <p>{{ iw[key] }}</p>
+                {% for iw in iws[key] %}
+                    <span style="margin-right: 20px;">{{ iw }}</span>
+                {% endfor %}
             {% endfor %}
             </div>
             
         </body>
         </html>
         """
-        return render_template_string(html_content, data=output, iw=insider_wallets)
+        return render_template_string(html_content, data=output, iws=insider_wallets)
     app.run(debug=False)
