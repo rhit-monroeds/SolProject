@@ -45,6 +45,7 @@ def cex_checkout():
         print("checking " + wallet)
         pg = 1
         while 1:
+            print("a")
             api_call = "https://pro-api.solscan.io/v2.0/account/transfer?address=" + wallet + "&activity_type[]=" + CEX_ACTIVITY_TYPE + "&token=" + NATIVE_SOLANA + "&amount[]=" + str(MIN_SOL) + "&block_time[]=" + str((datetime.now() - timedelta(hours=TIME_OFFSET)).timestamp()) + "&block_time[]=" + str((datetime.now()).timestamp()) + "flow=out&page=" + str(pg) + "&page_size=" + str(CEX_PG_SZ)
             pg += 1
             response = requests.get(api_call, headers=headers)
@@ -60,6 +61,7 @@ def cex_checkout():
 
 # analyze the transfers of wallet until the desired block_time is reached
 def wallet_checkout(wallet):
+    print("b")
     api_call = "https://pro-api.solscan.io/v2.0/account/transfer?address=" + wallet + "&activity_type[]=" + DEX_ACTIVITY_TYPE + "&page=1&page_size=" + str(DEX_PG_SZ)
     response = requests.get(api_call, headers=headers)
     if not response:
