@@ -57,6 +57,7 @@ def cex_checkout():
                 if not response:
                     raise Exception(f"Non-success status code: {response.status_code}")
                 data = response.json()["data"]
+                # gets rid of MEV bots, could check to see if wallet insta sells and add it if not
                 if len(data) == 0:
                     break
                 with ThreadPoolExecutor(max_workers=10) as executor:
@@ -64,8 +65,6 @@ def cex_checkout():
                     for transfer in data:
                         if transfer["to_address"] not in wallets:
                             futures.append(executor.submit(wallet_checkout, transfer["to_address"]))
-                    # results = [future.result() for future in futures]
-        # results = [future.result() for future in futures]
     return
 
 # analyze the transfers of wallet until the desired block_time is reached
