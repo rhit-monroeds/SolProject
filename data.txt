@@ -1,0 +1,3 @@
+24 hours, 10 Sol min transfer, 9 Sol min buy:
+Start: 11,948,050 End: 12,154,150
+Used: 206,110

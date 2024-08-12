@@ -13,7 +13,7 @@ DEX_ACTIVITY_TYPE = "ACTIVITY_SPL_TRANSFER"
 DEX_PG_SZ = 100
 NATIVE_SOLANA = "So11111111111111111111111111111111111111111"
 MIN_SOL = 9
-TIME_OFFSET = 24
+TIME_OFFSET = 1
 
 # Globals
 headers = {"token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjcmVhdGVkQXQiOjE3MjMzNDc4ODIwMjcsImVtYWlsIjoiZGVhbm1vbnJvZTI4QGdtYWlsLmNvbSIsImFjdGlvbiI6InRva2VuLWFwaSIsImFwaVZlcnNpb24iOiJ2MiIsImlhdCI6MTcyMzM0Nzg4Mn0.MeqTvUGP6HXZCC-jfQE5zJOVq0qRmnxQwbwLBDLFWGE"}
@@ -61,7 +61,6 @@ def cex_checkout():
 
 # analyze the transfers of wallet until the desired block_time is reached
 def wallet_checkout(wallet):
-    start_time = time.time()
     api_call = "https://pro-api.solscan.io/v2.0/account/transfer?address=" + wallet + "&activity_type[]=" + DEX_ACTIVITY_TYPE + "&page=1&page_size=" + str(DEX_PG_SZ)
     response = requests.get(api_call, headers=headers)
     if not response:
@@ -81,8 +80,6 @@ def wallet_checkout(wallet):
             if transfer["to_address"] not in insider_wallets:
                 insider_wallets[transfer["token_address"]].append(transfer["to_address"]) 
             break
-    end_time = time.time()
-    print(end_time - start_time)
     return
 
 if __name__ == "__main__":

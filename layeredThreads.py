@@ -12,9 +12,9 @@ app = Flask(__name__)
 CEX_ACTIVITY_TYPE = "ACTIVITY_SPL_TRANSFER"
 CEX_PG_SZ = 100
 DEX_ACTIVITY_TYPE = "ACTIVITY_SPL_TRANSFER"
-DEX_PG_SZ = 60
+DEX_PG_SZ = 100
 NATIVE_SOLANA = "So11111111111111111111111111111111111111111"
-MIN_SOL_TRANSFER = 29
+MIN_SOL_TRANSFER = 10
 MIN_SOL_BUY = 9
 TIME_OFFSET = 24
 
@@ -49,7 +49,7 @@ wallets = [random_1, random_2, cb_hot, cb_1, cb_2, bybit, binance_2, kucoin]
 
 def cex_checkout():
     # these threads may be useless?
-    with ThreadPoolExecutor(max_workers=8) as executor:
+    with ThreadPoolExecutor(max_workers=4) as executor:
         futures = []
         for wallet in wallets:
             print("checking " + wallet)
@@ -74,13 +74,14 @@ def cex_checkout():
 
 # analyze the transfers of wallet until the desired block_time is reached
 def wallet_checkout(wallet):
+    # could make this call more specific ex: only transactions in the range of the time offset
     api_call = "https://pro-api.solscan.io/v2.0/account/transfer?address=" + wallet + "&activity_type[]=" + DEX_ACTIVITY_TYPE + "&page=1&page_size=" + str(DEX_PG_SZ)
     response = requests.get(api_call, headers=headers)
     if not response:
         raise Exception(f"Non-success status code: {response.status_code}")
     data = response.json()["data"]
-    # gets rid of MEV bots, could check to see if wallet insta sells and add it if not
-    if len(data) > 50:
+    # gets rid of day traders, could check to see if wallet has sold and add it if not
+    if len(data) > 99:
         return
     # reverse data
     data = data[::-1]
