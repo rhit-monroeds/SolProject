@@ -1,5 +1,6 @@
 import requests
 import time
+import threading
 from datetime import datetime, timedelta
 from flask import Flask, render_template_string
 from collections import defaultdict
@@ -20,6 +21,7 @@ TIME_OFFSET = 24
 headers = {"token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjcmVhdGVkQXQiOjE3MjMzNDc4ODIwMjcsImVtYWlsIjoiZGVhbm1vbnJvZTI4QGdtYWlsLmNvbSIsImFjdGlvbiI6InRva2VuLWFwaSIsImFwaVZlcnNpb24iOiJ2MiIsImlhdCI6MTcyMzM0Nzg4Mn0.MeqTvUGP6HXZCC-jfQE5zJOVq0qRmnxQwbwLBDLFWGE"}
 potential_insider_tokens = {}
 insider_wallets = defaultdict(set)
+lock = threading.Lock()
 
 # tokens to ignore
 # wrapped Sol, WIF, POPCAT, MEW, PONKE, $michi, WOLF, BILLY, aura, FWOG, PGN, wDOG, MUMU, DOG, MOTHER, SCF, GINNAN, DADDY, USDC, DMAGA, NEIRO, $WIF, Jupiter, Jupiter, BTW, USDT, NOS, JitoSOL, NUGGIES, UWU, Jupiter, Neiro, mSOL, Bonk
@@ -83,8 +85,9 @@ def wallet_checkout(wallet):
         if transfer["token_address"] == NATIVE_SOLANA and transfer["flow"] == "out" and transfer["amount"] / 10 ** transfer["token_decimals"] > (MIN_SOL - 0.1):
             tid = transfer["trans_id"]
         elif transfer["flow"] == "in" and transfer["trans_id"] == tid and transfer["token_address"] not in ignore:
-            potential_insider_tokens[transfer["token_address"]] = potential_insider_tokens.get(transfer["token_address"], 0) + 1
-            insider_wallets[transfer["token_address"]].add(transfer["to_address"]) 
+            with lock:
+                potential_insider_tokens[transfer["token_address"]] = potential_insider_tokens.get(transfer["token_address"], 0) + 1
+                insider_wallets[transfer["token_address"]].add(transfer["to_address"]) 
             break
     return
 
