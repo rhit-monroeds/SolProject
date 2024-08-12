@@ -14,7 +14,8 @@ CEX_PG_SZ = 100
 DEX_ACTIVITY_TYPE = "ACTIVITY_SPL_TRANSFER"
 DEX_PG_SZ = 60
 NATIVE_SOLANA = "So11111111111111111111111111111111111111111"
-MIN_SOL = 9
+MIN_SOL_TRANSFER = 29
+MIN_SOL_BUY = 9
 TIME_OFFSET = 24
 
 # Globals
@@ -54,7 +55,7 @@ def cex_checkout():
             print("checking " + wallet)
             pg = 1
             while 1:
-                api_call = "https://pro-api.solscan.io/v2.0/account/transfer?address=" + wallet + "&activity_type[]=" + CEX_ACTIVITY_TYPE + "&token=" + NATIVE_SOLANA + "&amount[]=" + str(MIN_SOL) + "&block_time[]=" + str((datetime.now() - timedelta(hours=TIME_OFFSET)).timestamp()) + "&block_time[]=" + str((datetime.now()).timestamp()) + "flow=out&page=" + str(pg) + "&page_size=" + str(CEX_PG_SZ)
+                api_call = "https://pro-api.solscan.io/v2.0/account/transfer?address=" + wallet + "&activity_type[]=" + CEX_ACTIVITY_TYPE + "&token=" + NATIVE_SOLANA + "&amount[]=" + str(MIN_SOL_TRANSFER) + "&block_time[]=" + str((datetime.now() - timedelta(hours=TIME_OFFSET)).timestamp()) + "&block_time[]=" + str((datetime.now()).timestamp()) + "flow=out&page=" + str(pg) + "&page_size=" + str(CEX_PG_SZ)
                 pg += 1
                 response = requests.get(api_call, headers=headers)
                 if not response:
@@ -86,7 +87,7 @@ def wallet_checkout(wallet):
     # traverse data and look for transfers of Solana greater than 4.9
     tid = "n/a"
     for transfer in data:
-        if transfer["token_address"] == NATIVE_SOLANA and transfer["flow"] == "out" and transfer["amount"] / 10 ** transfer["token_decimals"] > (MIN_SOL - 0.1):
+        if transfer["token_address"] == NATIVE_SOLANA and transfer["flow"] == "out" and transfer["amount"] / 10 ** transfer["token_decimals"] > MIN_SOL_BUY:
             tid = transfer["trans_id"]
         elif transfer["flow"] == "in" and transfer["trans_id"] == tid and transfer["token_address"] not in ignore:
             with lock:
