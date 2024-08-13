@@ -31,6 +31,7 @@ latest_insider_wallets = defaultdict(set)
 lock = threading.Lock()
 count = 0
 last_update_time = 0
+specific_time = 0
 
 # wrapped Sol, WIF, POPCAT, MEW, PONKE, $michi, WOLF, BILLY, aura, FWOG, PGN, wDOG, MUMU, DOG, MOTHER, SCF, GINNAN, DADDY, USDC, DMAGA, NEIRO, $WIF, Jupiter, Jupiter, BTW, USDT, NOS, JitoSOL, NUGGIES, UWU, Jupiter, Neiro, mSOL, Bonk, RETARDIO
 # WBTC, ATLAS, RENDER
@@ -118,7 +119,7 @@ def decentral_checkout(w):
     return
 
 def update_data():
-    global latest_potential_insider_tokens, latest_insider_wallets, count, last_update_time, latest_token_info_cache
+    global latest_potential_insider_tokens, latest_insider_wallets, count, last_update_time, latest_token_info_cache, specific_time
     start_time = time.time()
     central_check()
     end_time = time.time()
@@ -132,6 +133,7 @@ def update_data():
     latest_insider_wallets = {k: set(v) for k, v in insider_wallets.items()}
 
     last_update_time = int(time.time())
+    specific_time = datetime.fromtimestamp(last_update_time)
     
     # Clear the temporary data for the next run
     potential_insider_tokens.clear()
@@ -173,14 +175,16 @@ def display_data():
     </head>
     <body>
         <h1 style="text-align: center;">Data Output</h1>
+
+        <h2>{{ specific_time }}</h2>
         
         <div style="margin-bottom: 20px;">
         {% for key, value in data.items() %}
             {% if value|int > 1 %}
                 <table>
                     <tr>
-                        <th>Property</th>
-                        <th>Value</th>
+                        <th>|</th>
+                        <th>|</th>
                     </tr>
                     {% for prop, prop_value in token_info[key].items() %}
                         <tr>
@@ -207,7 +211,7 @@ def display_data():
     </body>
     </html>
     """
-    return render_template_string(html_content, data=found_tokens, token_info=latest_token_info_cache, iws=latest_insider_wallets, last_update_time=last_update_time)
+    return render_template_string(html_content, data=found_tokens, token_info=latest_token_info_cache, count=count, iws=latest_insider_wallets, last_update_time=last_update_time, specific_time=specific_time)
 
 @app.route("/last_update")
 def last_update():
