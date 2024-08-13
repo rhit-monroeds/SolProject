@@ -9,6 +9,11 @@ from apscheduler.schedulers.background import BackgroundScheduler
 
 app = Flask(__name__)
 
+# TODO
+# embed charts in page?
+# get Telegram notifications
+# have on public web
+
 # Constants
 CAT = "ACTIVITY_SPL_TRANSFER"
 CPGS = 100
@@ -55,7 +60,7 @@ kuc = "BmFdpraQhkiDQE6SnfG5omcA1VwzqfXrwtNYBwWTymy6"
 ws = [r_1, r_2, cb_hot, cb_1, cb_2, bbit, binan_2, kuc]
 
 def central_check():
-    # these threads may be useless?
+    # TODO these threads may be useless?
     with ThreadPoolExecutor(max_workers=3) as executor:
         futures = []
         for w in ws:
@@ -75,18 +80,16 @@ def central_check():
                     for t in data:
                         if t["to_address"] not in ws:
                             futures.append(executor.submit(decentral_checkout, t["to_address"]))
-                    # results = [future.result() for future in futures]
-        # results = [future.result() for future in futures]
     return
 
 def decentral_checkout(w):
-    # could make this call more specific ex: only transactions in the range of the time offset
+    # TODO could make this call more specific ex: only transactions in the range of the time offset
     ac = "https://pro-api.solscan.io/v2.0/account/transfer?address=" + w + "&activity_type[]=" + DAT + "&page=1&page_size=" + str(DPGS)
     response = requests.get(ac, headers=headers)
     if not response:
         raise Exception(f"Non-success status code: {response.status_code}")
     data = response.json()["data"]
-    # gets rid of day traders, could check to see if wallet has sold and add it if not
+    # TODO gets rid of day traders, could check to see if wallet has sold and add it if not
     if len(data) > 99:
         return
     # reverse data
@@ -102,8 +105,6 @@ def decentral_checkout(w):
                 insider_wallets[transaction["token_address"]].add(transaction["to_address"]) 
                 if length < len(insider_wallets[transaction["token_address"]]):
                     potential_insider_tokens[transaction["token_address"]] = potential_insider_tokens.get(transaction["token_address"], 0) + 1
-            
-            
             if transaction["token_address"] not in token_info_cache:
                 tac = "https://pro-api.solscan.io/v2.0/token/meta?address=" + transaction["token_address"]
                 response = requests.get(tac, headers=headers)
@@ -111,10 +112,6 @@ def decentral_checkout(w):
                     raise Exception(f"Non-success status code: {response.status_code}")
                 data = response.json()
                 token_info_cache[transaction["token_address"]] = data.get("data", {})
-                
-
-
-
             break
     return
 
