@@ -15,8 +15,8 @@ app = Flask(__name__)
 # TODO
 # make it so i receive another update when the number of iws increases
 # track a specific wallet and sell when they do
-# different version where keep a list of wallets that have transfered for
-# past 24 hours and check them all for purchases in the past 1-4 hours
+# different version where keep a list of wallets that have transfered for past 24 hours and check them all for purchases in the past 1-4 hours
+# send telegram message to start/end remotely, will have to run perpetually and is just idle until the message is sent
 
 # Constants
 CAT = "ACTIVITY_SPL_TRANSFER"
@@ -24,6 +24,7 @@ CPGS = 100
 DAT = "ACTIVITY_SPL_TRANSFER"
 DPGS = 100
 NS = "So11111111111111111111111111111111111111111"
+WS = "So11111111111111111111111111111111111111112"
 MST = 10
 MSB = 9
 TO = 24
@@ -64,8 +65,9 @@ cb_2 = "2AQdpHJ2JpcEgPiATUXjQxA8QmafFegfQwSLWSprPicm"
 bbit = "AC5RDfQFmDS1deWZos921JfqscXdByf8BKHs5ACWjtW2"
 binan_2 = "5tzFkiKscXHK5ZXCGbXZxdw7gTjjD1mBwuoFbhUvuAi9"
 kuc = "BmFdpraQhkiDQE6SnfG5omcA1VwzqfXrwtNYBwWTymy6"
-ws = [r_1, r_2, r_3, cb_hot, cb_1, cb_2, bbit, binan_2, kuc]
-
+okx = "5VCwKtCXgCJ6kit5FybXjvriW3xELsFDhYrPSqtJNmcD"
+# ws = [r_1, r_2, r_3, cb_hot, cb_1, cb_2, bbit, binan_2, kuc, okx]
+ws = [okx]
 def central_check():
     # TODO these threads may be useless?
     with ThreadPoolExecutor(max_workers=3) as executor:
@@ -93,6 +95,9 @@ def decentral_checkout(w):
     # TODO could make this call more specific ex: only transactions in the range of the time offset
     ac = "https://pro-api.solscan.io/v2.0/account/transfer?address=" + w + "&activity_type[]=" + DAT + "&page=1&page_size=" + str(DPGS)
     response = requests.get(ac, headers=headers)
+    if w == "HbC5bvppyB31bDENk1SStf9AaDzgYmeckTuZRApeeQbu":
+        print("lets go!")
+
     if not response:
         raise Exception(f"Non-success status code: {response.status_code}")
     data = response.json()["data"]
@@ -104,7 +109,7 @@ def decentral_checkout(w):
     # traverse data and look for transfers of Solana greater than 4.9
     tid = "n/a"
     for transaction in data:
-        if transaction["token_address"] == NS and transaction["flow"] == "out" and transaction["amount"] / 10 ** transaction["token_decimals"] > MSB:
+        if (transaction["token_address"] == NS or transaction["token_address"] == WS) and transaction["flow"] == "out" and transaction["amount"] / 10 ** transaction["token_decimals"] > MSB:
             tid = transaction["trans_id"]
         elif transaction["flow"] == "in" and transaction["trans_id"] == tid and transaction["token_address"] not in ignore:
             with lock:
