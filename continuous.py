@@ -14,6 +14,8 @@ from telegram.ext import ApplicationBuilder, CommandHandler
 
 app = Flask(__name__)
 
+# latest version but it breaks on second run
+
 # TODO
 # track a specific wallet and sell when they do
 # different version where keep a list of wallets that have transfered for past 24 hours and check them all for purchases in the past 1-4 hours
