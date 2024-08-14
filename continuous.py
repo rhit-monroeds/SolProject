@@ -13,9 +13,7 @@ from telegram.error import TelegramError
 app = Flask(__name__)
 
 # TODO
-# embed charts in page?
-# get Telegram notifications
-# have on public web
+# make it so i receive another update when the number of iws increases
 # track a specific wallet and sell when they do
 # different version where keep a list of wallets that have transfered for
 # past 24 hours and check them all for purchases in the past 1-4 hours
