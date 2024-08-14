@@ -1,11 +1,14 @@
 import requests
 import time
 import threading
+import asyncio
 from datetime import datetime, timedelta
 from flask import Flask, render_template_string, jsonify
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
 from apscheduler.schedulers.background import BackgroundScheduler
+from telegram import Bot
+from telegram.error import TelegramError
 
 app = Flask(__name__)
 
@@ -14,6 +17,8 @@ app = Flask(__name__)
 # get Telegram notifications
 # have on public web
 # track a specific wallet and sell when they do
+# different version where keep a list of wallets that have transfered for
+# past 24 hours and check them all for purchases in the past 1-4 hours
 
 # Constants
 CAT = "ACTIVITY_SPL_TRANSFER"
@@ -33,6 +38,7 @@ insider_wallets = defaultdict(set)
 latest_potential_insider_tokens = {}
 latest_token_info_cache = {}
 latest_insider_wallets = defaultdict(set)
+notified_tokens = set()
 
 lock = threading.Lock()
 count = 0
@@ -40,7 +46,7 @@ last_update_time = 0
 specific_time = 0
 
 # wrapped Sol, WIF, POPCAT, MEW, PONKE, $michi, WOLF, BILLY, aura, FWOG, PGN, wDOG, MUMU, DOG, MOTHER, SCF, GINNAN, DADDY, USDC, DMAGA, NEIRO, $WIF, Jupiter, Jupiter, BTW, USDT, NOS, JitoSOL, NUGGIES, UWU, Jupiter, Neiro, mSOL, Bonk, RETARDIO
-# WBTC, ATLAS, RENDER, DUKO
+# WBTC, ATLAS, RENDER, DUKO, HNT
 ignore = ["So11111111111111111111111111111111111111112", "21AErpiB8uSb94oQKRcwuHqyHF93njAxBSbdUrpupump", "7GCihgDB8fe6KNjn2MYtkzZcRjQy3t9GHdC8uHYmW2hr", "MEW1gQWJ3nEXg2qgERiKu7FAFj79PHvQVREQUzScPP5", "5z3EqYQo9HiCEs3R84RCDMu2n7anpDMxRhdK8PSWmrRC", 
           "5mbK36SZ7J19An8jFochhQS4of8g6BwUjbeCSxBSoWdp", "Faf89929Ni9fbg4gmVZTca7eW6NFg877Jqn6MizT3Gvw", "3B5wuUrMEi5yATD7on46hKfej3pfmd7t1RKgrsN3pump", "DtR4D9FtVoTX2569gaL837ZgrB6wNjj6tkmnX9Rdk9B2", "A8C3xuqscfmyLrte3VmTqrAq8kgMASius9AFNANwpump", 
           "2Vnei1LAmrBpbL8fNCiCpaYcQTCSodiE51wab6qaQJAq", "GYKmdfcUmZVrqfcH1g579BGjuzSRijj3LBuwv79rpump", "5LafQUrVco6o7KMz42eqVEJ9LW31StPyGjeeu5sKoMtA", "CATTzAwLyADd2ekzVjTjX8tVUBYfrozdkJBkutJggdB7", "3S8qX1MsMqRbiwKg2cQyx7nis1oHMgaCuc9c4VfvVdPN", 
@@ -48,17 +54,19 @@ ignore = ["So11111111111111111111111111111111111111112", "21AErpiB8uSb94oQKRcwuH
           "CTg3ZgYx79zrE1MteDVkmkcGniiFrK1hJ6yiabropump", "EKpQGSJtjMFqKZ9KQanSqYXRcF8fBopzLHYxdM65zcjm", "27G8MtK7VtTcCHkpASjSDdkWWYfoqT6ggEuKidVJidD4", "JUPyiwrYJFskUPiHa7hkeR8VUtAeFoSYbKedZNsDvCN", "4ytpZgVoNB66bFs6NRCUaAVsLdtYk2fHq4U92Jnjpump",
           "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB", "nosXBVoaCTtYdLvKY6Csb4AC8JCdQKKAaWYtx2ZMoo7", "J1toso1uCk3RLmjorhTtrVwY9HJ7X8V9yYac6Y7kGCPn", "Ej6Lz2Cje5iRziDKnmfpd9Y3bpGe6HDQJGxVbxu4pump", "UwU8RVXB69Y6Dcju6cN2Qef6fykkq6UUNpB15rZku6Z",
           "jupSoLaHXQiZZTSfEWMTRRgpnyFm8f6sZdosWBjx93v", "CTJf74cTo3cw8acFP1YXF3QpsQUUBGBjh2k2e8xsZ6UL", "mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So", "DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263", "6ogzHhzdrQr9Pgv6hZ2MNze7UrzBMAFyBBWUYp1Fhitx",
-          "3NZ9JMVBmGAqocybic2c7LQCJScmgsAZ6vQqTDzcqmJh", "ATLASXmbPQxBUYbxPsV97usA3fPQYEqzQBUHgiFCUsXx", "rndrizKT3MK1iimdxRdWabcF7Zg7AR5T4nud4EkHBof", "HLptm5e6rTgh4EKgDpYFrnRHbjpkMyVdEeREEa2G7rf9"]
+          "3NZ9JMVBmGAqocybic2c7LQCJScmgsAZ6vQqTDzcqmJh", "ATLASXmbPQxBUYbxPsV97usA3fPQYEqzQBUHgiFCUsXx", "rndrizKT3MK1iimdxRdWabcF7Zg7AR5T4nud4EkHBof", "HLptm5e6rTgh4EKgDpYFrnRHbjpkMyVdEeREEa2G7rf9", "hntyVP6YFm1Hg25TN9WGLqM12b8TQmcknKrdu1oxWux",
+          "Hax9LTgsQkze1YFychnBLtFH8gYbQKtKfWKKg2SP6gdD"]
 
 r_1 = "G2YxRa6wt1qePMwfJzdXZG62ej4qaTC7YURzuh2Lwd3t"
 r_2 = "DQ5JWbJyWdJeyBxZuuyu36sUBud6L6wo3aN1QC1bRmsR"
+r_3 = "DQ5JWbJyWdJeyBxZuuyu36sUBud6L6wo3aN1QC1bRmsR"
 cb_hot = "GJRs4FwHtemZ5ZE9x3FNvJ8TMwitKTh21yxdRPqn7npE"
 cb_1 = "H8sMJSCQxfKiFTCfDR3DUMLPwcRbM61LGFJ8N4dK3WjS"
 cb_2 = "2AQdpHJ2JpcEgPiATUXjQxA8QmafFegfQwSLWSprPicm"
 bbit = "AC5RDfQFmDS1deWZos921JfqscXdByf8BKHs5ACWjtW2"
 binan_2 = "5tzFkiKscXHK5ZXCGbXZxdw7gTjjD1mBwuoFbhUvuAi9"
 kuc = "BmFdpraQhkiDQE6SnfG5omcA1VwzqfXrwtNYBwWTymy6"
-ws = [r_1, r_2, cb_hot, cb_1, cb_2, bbit, binan_2, kuc]
+ws = [r_1, r_2, r_3, cb_hot, cb_1, cb_2, bbit, binan_2, kuc]
 
 def central_check():
     # TODO these threads may be useless?
@@ -116,14 +124,26 @@ def decentral_checkout(w):
             break
     return
 
+async def send_telegram_message(message):
+    bot_token = '7403847561:AAFFs7t6EQ_dQggI_YOGeKgz1d_ZewzGaZc'
+    chat_id = '6478230687'
+    
+    bot = Bot(token=bot_token)
+    try:
+        await bot.send_message(chat_id=chat_id, text=message)
+    except TelegramError as e:
+        print(f"Failed to send Telegram message: {e}")
+
+def send_telegram_message_sync(message):
+    asyncio.run(send_telegram_message(message))
+
 def update_data():
-    global latest_potential_insider_tokens, latest_insider_wallets, count, last_update_time, latest_token_info_cache, specific_time
+    global latest_potential_insider_tokens, latest_insider_wallets, last_update_time, latest_token_info_cache, specific_time, notified_tokens
     start_time = time.time()
     central_check()
     end_time = time.time()
     print("Update completed in", end_time - start_time, "seconds")
     print(potential_insider_tokens)
-    count += 1
     
     # Update the latest results
     latest_potential_insider_tokens = dict(potential_insider_tokens)
@@ -132,6 +152,20 @@ def update_data():
 
     last_update_time = int(time.time())
     specific_time = datetime.fromtimestamp(last_update_time)
+
+    # Check for new tokens and send notifications
+    for token, count in latest_potential_insider_tokens.items():
+        if token not in notified_tokens and count > 1:
+            token_info = latest_token_info_cache.get(token, {})
+            symbol = token_info.get('symbol', 'Unknown')
+            name = token_info.get('name', 'Unknown')
+            dexscreener_link = f"https://dextools.io/app/en/solana/pair-explorer/{token}"
+            message = (f"New token found: {symbol} ({name})\n"
+                       f"Address: {token}\n"
+                       f"Count: {count}\n"
+                       f"DexScreener: {dexscreener_link}")            
+            send_telegram_message_sync(message)
+            notified_tokens.add(token)
     
     # Clear the temporary data for the next run
     potential_insider_tokens.clear()
@@ -209,7 +243,7 @@ def display_data():
     </body>
     </html>
     """
-    return render_template_string(html_content, data=found_tokens, token_info=latest_token_info_cache, count=count, iws=latest_insider_wallets, last_update_time=last_update_time, specific_time=specific_time)
+    return render_template_string(html_content, data=found_tokens, token_info=latest_token_info_cache, iws=latest_insider_wallets, last_update_time=last_update_time, specific_time=specific_time)
 
 @app.route("/last_update")
 def last_update():
