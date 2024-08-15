@@ -52,7 +52,6 @@ specific_time = 0
 
 r_1 = "G2YxRa6wt1qePMwfJzdXZG62ej4qaTC7YURzuh2Lwd3t"
 r_2 = "DQ5JWbJyWdJeyBxZuuyu36sUBud6L6wo3aN1QC1bRmsR"
-r_3 = "DQ5JWbJyWdJeyBxZuuyu36sUBud6L6wo3aN1QC1bRmsR"
 cb_hot = "GJRs4FwHtemZ5ZE9x3FNvJ8TMwitKTh21yxdRPqn7npE"
 cb_1 = "H8sMJSCQxfKiFTCfDR3DUMLPwcRbM61LGFJ8N4dK3WjS"
 cb_2 = "2AQdpHJ2JpcEgPiATUXjQxA8QmafFegfQwSLWSprPicm"
@@ -60,7 +59,7 @@ bbit = "AC5RDfQFmDS1deWZos921JfqscXdByf8BKHs5ACWjtW2"
 binan_2 = "5tzFkiKscXHK5ZXCGbXZxdw7gTjjD1mBwuoFbhUvuAi9"
 kuc = "BmFdpraQhkiDQE6SnfG5omcA1VwzqfXrwtNYBwWTymy6"
 okx = "5VCwKtCXgCJ6kit5FybXjvriW3xELsFDhYrPSqtJNmcD"
-ws = [r_1, r_2, r_3, cb_hot, cb_1, cb_2, bbit, binan_2, kuc, okx]
+ws = [r_1, r_2, cb_hot, cb_1, cb_2, bbit, binan_2, kuc, okx]
 
 async def add_token_to_ignore(update, context):
     if not context.args:
