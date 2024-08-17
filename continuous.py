@@ -97,7 +97,7 @@ def central_check():
                 data = response.json()["data"]
                 if len(data) == 0:
                     break
-                with ThreadPoolExecutor(max_workers=10) as executor:
+                with ThreadPoolExecutor(max_workers=8) as executor:
                     futures = []
                     for t in data:
                         if t["to_address"] not in ws:

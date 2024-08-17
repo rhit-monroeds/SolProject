@@ -28,6 +28,7 @@ WS = "So11111111111111111111111111111111111111112"
 MST = 10
 MSB = 9
 TO = 24
+LIMIT = 2
 
 # Globals
 headers = {"token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjcmVhdGVkQXQiOjE3MjMzNDc4ODIwMjcsImVtYWlsIjoiZGVhbm1vbnJvZTI4QGdtYWlsLmNvbSIsImFjdGlvbiI6InRva2VuLWFwaSIsImFwaVZlcnNpb24iOiJ2MiIsImlhdCI6MTcyMzM0Nzg4Mn0.MeqTvUGP6HXZCC-jfQE5zJOVq0qRmnxQwbwLBDLFWGE"}
@@ -54,7 +55,7 @@ ignore = ["So11111111111111111111111111111111111111112", "21AErpiB8uSb94oQKRcwuH
           "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB", "nosXBVoaCTtYdLvKY6Csb4AC8JCdQKKAaWYtx2ZMoo7", "J1toso1uCk3RLmjorhTtrVwY9HJ7X8V9yYac6Y7kGCPn", "Ej6Lz2Cje5iRziDKnmfpd9Y3bpGe6HDQJGxVbxu4pump", "UwU8RVXB69Y6Dcju6cN2Qef6fykkq6UUNpB15rZku6Z",
           "jupSoLaHXQiZZTSfEWMTRRgpnyFm8f6sZdosWBjx93v", "CTJf74cTo3cw8acFP1YXF3QpsQUUBGBjh2k2e8xsZ6UL", "mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So", "DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263", "6ogzHhzdrQr9Pgv6hZ2MNze7UrzBMAFyBBWUYp1Fhitx",
           "3NZ9JMVBmGAqocybic2c7LQCJScmgsAZ6vQqTDzcqmJh", "ATLASXmbPQxBUYbxPsV97usA3fPQYEqzQBUHgiFCUsXx", "rndrizKT3MK1iimdxRdWabcF7Zg7AR5T4nud4EkHBof", "HLptm5e6rTgh4EKgDpYFrnRHbjpkMyVdEeREEa2G7rf9", "hntyVP6YFm1Hg25TN9WGLqM12b8TQmcknKrdu1oxWux",
-          "Hax9LTgsQkze1YFychnBLtFH8gYbQKtKfWKKg2SP6gdD"]
+          "Hax9LTgsQkze1YFychnBLtFH8gYbQKtKfWKKg2SP6gdD", "4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R", "jtojtomepa8beP8AuQc6eXt5FriJwfFMwQx2v2f9mCL", "2b1kV6DkPAnxd5ixfnxCpjxmKwqjjaYmCZfHsFu24GXo", "HZ1JovNiVvGrGNiiYvEozEVgZ58xaU3RKwX8eACQBCt3"]
 
 r_1 = "G2YxRa6wt1qePMwfJzdXZG62ej4qaTC7YURzuh2Lwd3t"
 r_2 = "DQ5JWbJyWdJeyBxZuuyu36sUBud6L6wo3aN1QC1bRmsR"
@@ -84,7 +85,7 @@ def central_check():
                 data = response.json()["data"]
                 if len(data) == 0:
                     break
-                with ThreadPoolExecutor(max_workers=10) as executor:
+                with ThreadPoolExecutor(max_workers=8) as executor:
                     futures = []
                     for t in data:
                         if t["to_address"] not in ws:
@@ -155,7 +156,7 @@ def update_data():
 
     # Check for new tokens and send notifications
     for token, count in latest_potential_insider_tokens.items():
-        if token not in notified_tokens and count > 1:
+        if token not in notified_tokens and count >= LIMIT:
             token_info = latest_token_info_cache.get(token, {})
             symbol = token_info.get('symbol', 'Unknown')
             name = token_info.get('name', 'Unknown')
@@ -174,7 +175,7 @@ def update_data():
 
 # Set up the scheduler
 scheduler = BackgroundScheduler()
-scheduler.add_job(func=update_data, trigger="interval", minutes=10)
+scheduler.add_job(func=update_data, trigger="interval", minutes=12)
 scheduler.start()
 
 @app.route("/")
