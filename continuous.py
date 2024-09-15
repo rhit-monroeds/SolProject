@@ -303,7 +303,7 @@ if __name__ == "__main__":
     update_data()
 
     # Set up the Telegram bot
-    application = ApplicationBuilder().token('7403847561:AAFFs7t6EQ_dQggI_YOGeKgz1d_ZewzGaZc').build()
+    application = ApplicationBuilder().token('your-token').build()
     
     # Add command handlers
     application.add_handler(CommandHandler("add", add_token_to_ignore))
