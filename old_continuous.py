@@ -25,13 +25,13 @@ DAT = "ACTIVITY_SPL_TRANSFER"
 DPGS = 100
 NS = "So11111111111111111111111111111111111111111"
 WS = "So11111111111111111111111111111111111111112"
-MST = 10
-MSB = 9
+MST = 9.9
+MSB = 10
 TO = 24
-LIMIT = 2
+LIMIT = 5
 
 # Globals
-headers = {"token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjcmVhdGVkQXQiOjE3MjMzNDc4ODIwMjcsImVtYWlsIjoiZGVhbm1vbnJvZTI4QGdtYWlsLmNvbSIsImFjdGlvbiI6InRva2VuLWFwaSIsImFwaVZlcnNpb24iOiJ2MiIsImlhdCI6MTcyMzM0Nzg4Mn0.MeqTvUGP6HXZCC-jfQE5zJOVq0qRmnxQwbwLBDLFWGE"}
+headers = {"token":"your-api-key"}
 potential_insider_tokens = {}
 token_info_cache = {}
 insider_wallets = defaultdict(set)
@@ -55,7 +55,8 @@ ignore = ["So11111111111111111111111111111111111111112", "21AErpiB8uSb94oQKRcwuH
           "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB", "nosXBVoaCTtYdLvKY6Csb4AC8JCdQKKAaWYtx2ZMoo7", "J1toso1uCk3RLmjorhTtrVwY9HJ7X8V9yYac6Y7kGCPn", "Ej6Lz2Cje5iRziDKnmfpd9Y3bpGe6HDQJGxVbxu4pump", "UwU8RVXB69Y6Dcju6cN2Qef6fykkq6UUNpB15rZku6Z",
           "jupSoLaHXQiZZTSfEWMTRRgpnyFm8f6sZdosWBjx93v", "CTJf74cTo3cw8acFP1YXF3QpsQUUBGBjh2k2e8xsZ6UL", "mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So", "DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263", "6ogzHhzdrQr9Pgv6hZ2MNze7UrzBMAFyBBWUYp1Fhitx",
           "3NZ9JMVBmGAqocybic2c7LQCJScmgsAZ6vQqTDzcqmJh", "ATLASXmbPQxBUYbxPsV97usA3fPQYEqzQBUHgiFCUsXx", "rndrizKT3MK1iimdxRdWabcF7Zg7AR5T4nud4EkHBof", "HLptm5e6rTgh4EKgDpYFrnRHbjpkMyVdEeREEa2G7rf9", "hntyVP6YFm1Hg25TN9WGLqM12b8TQmcknKrdu1oxWux",
-          "Hax9LTgsQkze1YFychnBLtFH8gYbQKtKfWKKg2SP6gdD", "4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R", "jtojtomepa8beP8AuQc6eXt5FriJwfFMwQx2v2f9mCL", "2b1kV6DkPAnxd5ixfnxCpjxmKwqjjaYmCZfHsFu24GXo", "HZ1JovNiVvGrGNiiYvEozEVgZ58xaU3RKwX8eACQBCt3"]
+          "Hax9LTgsQkze1YFychnBLtFH8gYbQKtKfWKKg2SP6gdD", "4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R", "jtojtomepa8beP8AuQc6eXt5FriJwfFMwQx2v2f9mCL", "2b1kV6DkPAnxd5ixfnxCpjxmKwqjjaYmCZfHsFu24GXo", "HZ1JovNiVvGrGNiiYvEozEVgZ58xaU3RKwX8eACQBCt3",
+          "HhJpBhRRn4g56VsyLuT8DL5Bv31HkXqsrahTTUCZeZg4", "jUiTwZrBfqUqFAT66TFNDEenDjYoVHQ8TCUyWLbpump", "AXyd5cZqJDYRoN16xcv8s6k41M2kJMfKJnQiXeMd1rCg"]
 
 r_1 = "G2YxRa6wt1qePMwfJzdXZG62ej4qaTC7YURzuh2Lwd3t"
 r_2 = "DQ5JWbJyWdJeyBxZuuyu36sUBud6L6wo3aN1QC1bRmsR"
@@ -71,7 +72,7 @@ ws = [r_1, r_2, cb_hot, cb_1, cb_2, bbit, binan_2, kuc, okx]
 
 def central_check():
     # TODO these threads may be useless?
-    with ThreadPoolExecutor(max_workers=3) as executor:
+    with ThreadPoolExecutor(max_workers=2) as executor:
         futures = []
         for w in ws:
             print("checking " + w)
