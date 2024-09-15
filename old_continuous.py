@@ -128,8 +128,8 @@ def decentral_checkout(w):
     return
 
 async def send_telegram_message(message):
-    bot_token = '7403847561:AAFFs7t6EQ_dQggI_YOGeKgz1d_ZewzGaZc'
-    chat_id = '6478230687'
+    bot_token = 'your-telegram-bot'
+    chat_id = 'your-telegram-id'
     
     bot = Bot(token=bot_token)
     try:
