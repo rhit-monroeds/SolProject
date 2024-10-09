@@ -2,8 +2,6 @@ import requests
 import time
 from datetime import datetime, timedelta
 
-
-# Constants
 CEX_ACTIVITY_TYPE = "ACTIVITY_SPL_TRANSFER"
 CEX_PG_SZ = 100
 DEX_ACTIVITY_TYPE = "ACTIVITY_SPL_TRANSFER"
@@ -12,10 +10,8 @@ NATIVE_SOLANA = "So11111111111111111111111111111111111111111"
 MIN_SOL = 9
 TIME_OFFSET = 24
 
-# Globals
 headers = {"token":"your-api-key"}
 
-# CEX Wallet
 binance_2 = "5tzFkiKscXHK5ZXCGbXZxdw7gTjjD1mBwuoFbhUvuAi9"
 
 def cex_checkout():

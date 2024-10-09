@@ -5,7 +5,6 @@ from collections import defaultdict
 
 app = Flask(__name__)
 
-# Constants
 CEX_ACTIVITY_TYPE = "ACTIVITY_SPL_TRANSFER"
 CEX_PG_SZ = 100
 DEX_ACTIVITY_TYPE = "ACTIVITY_SPL_TRANSFER"
@@ -14,13 +13,10 @@ NATIVE_SOLANA = "So11111111111111111111111111111111111111111"
 MIN_SOL = 10
 TIME_OFFSET = 24
 
-# Globals
 headers = {"token":"your-api-key"}
 potential_insider_tokens = {}
 insider_wallets = defaultdict(list)
 
-# tokens to ignore
-# wrapped Sol, WIF, POPCAT, MEW, PONKE, $michi, WOLF, BILLY, aura, FWOG, PGN, wDOG, MUMU, DOG, MOTHER, SCF, GINNAN, DADDY, USDC, DMAGA, NEIRO, $WIF, Jupiter, Jupiter, BTW, USDT, NOS, JitoSOL, NUGGIES, UWU, Jupiter, Neiro, mSOL
 ignore = ["So11111111111111111111111111111111111111112", "21AErpiB8uSb94oQKRcwuHqyHF93njAxBSbdUrpupump", "7GCihgDB8fe6KNjn2MYtkzZcRjQy3t9GHdC8uHYmW2hr", "MEW1gQWJ3nEXg2qgERiKu7FAFj79PHvQVREQUzScPP5", "5z3EqYQo9HiCEs3R84RCDMu2n7anpDMxRhdK8PSWmrRC", 
           "5mbK36SZ7J19An8jFochhQS4of8g6BwUjbeCSxBSoWdp", "Faf89929Ni9fbg4gmVZTca7eW6NFg877Jqn6MizT3Gvw", "3B5wuUrMEi5yATD7on46hKfej3pfmd7t1RKgrsN3pump", "DtR4D9FtVoTX2569gaL837ZgrB6wNjj6tkmnX9Rdk9B2", "A8C3xuqscfmyLrte3VmTqrAq8kgMASius9AFNANwpump", 
           "2Vnei1LAmrBpbL8fNCiCpaYcQTCSodiE51wab6qaQJAq", "GYKmdfcUmZVrqfcH1g579BGjuzSRijj3LBuwv79rpump", "5LafQUrVco6o7KMz42eqVEJ9LW31StPyGjeeu5sKoMtA", "CATTzAwLyADd2ekzVjTjX8tVUBYfrozdkJBkutJggdB7", "3S8qX1MsMqRbiwKg2cQyx7nis1oHMgaCuc9c4VfvVdPN", 
@@ -29,7 +25,6 @@ ignore = ["So11111111111111111111111111111111111111112", "21AErpiB8uSb94oQKRcwuH
           "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB", "nosXBVoaCTtYdLvKY6Csb4AC8JCdQKKAaWYtx2ZMoo7", "J1toso1uCk3RLmjorhTtrVwY9HJ7X8V9yYac6Y7kGCPn", "Ej6Lz2Cje5iRziDKnmfpd9Y3bpGe6HDQJGxVbxu4pump", "UwU8RVXB69Y6Dcju6cN2Qef6fykkq6UUNpB15rZku6Z",
           "jupSoLaHXQiZZTSfEWMTRRgpnyFm8f6sZdosWBjx93v", "CTJf74cTo3cw8acFP1YXF3QpsQUUBGBjh2k2e8xsZ6UL", "mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So"]
 
-# CEX Wallets
 random_1 = "G2YxRa6wt1qePMwfJzdXZG62ej4qaTC7YURzuh2Lwd3t"
 random_2 = "DQ5JWbJyWdJeyBxZuuyu36sUBud6L6wo3aN1QC1bRmsR"
 cb_hot = "GJRs4FwHtemZ5ZE9x3FNvJ8TMwitKTh21yxdRPqn7npE"
@@ -58,16 +53,13 @@ def cex_checkout():
                     wallet_checkout(transfer["to_address"], transfer["block_time"])
     return
 
-# analyze the transfers of wallet until the desired block_time is reached
 def wallet_checkout(wallet, check_until):
     api_call = "https://pro-api.solscan.io/v2.0/account/transfer?address=" + wallet + "&activity_type[]=" + DEX_ACTIVITY_TYPE + "&block_time[]=" + str(check_until) + "&block_time[]=" + str((datetime.now()).timestamp()) +"&page=1&page_size=" + str(DEX_PG_SZ)
     response = requests.get(api_call, headers=headers)
     if not response:
         raise Exception(f"Non-success status code: {response.status_code}")
     data = response.json()["data"]
-    # reverse data
     data = data[::-1]
-    # traverse data and look for transfers of Solana greater than 4.9
     tid = "n/a"
     for transfer in data:
         if transfer["token_address"] == NATIVE_SOLANA and transfer["flow"] == "out" and transfer["amount"] / 10 ** transfer["token_decimals"] > (MIN_SOL - 0.1):
@@ -81,11 +73,9 @@ def wallet_checkout(wallet, check_until):
 if __name__ == "__main__":
     cex_checkout()
     print(potential_insider_tokens)
-    # set up Flask to view data better
     @app.route("/")
     def display_data():
         output = dict(sorted(potential_insider_tokens.items(), key=lambda item: item[1], reverse=True))
-        # Render the data as a pretty-printed JSON string
         html_content = """
         <html>
         <body>

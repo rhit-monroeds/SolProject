@@ -24,7 +24,7 @@ def cex_checkout():
     count = 0
     with ThreadPoolExecutor(max_workers=20) as executor:
         futures = []
-        for pg in range(1, 1000):  # Adjust the range as needed
+        for pg in range(1, 1000):
             futures.append(executor.submit(fetch_page, pg))
             count += 1
             if time.time() - start_time > 60:

@@ -48,7 +48,6 @@ kucoin = "BmFdpraQhkiDQE6SnfG5omcA1VwzqfXrwtNYBwWTymy6"
 wallets = [random_1, random_2, cb_hot, cb_1, cb_2, bybit, binance_2, kucoin]
 
 def cex_checkout():
-    # these threads may be useless?
     with ThreadPoolExecutor(max_workers=4) as executor:
         futures = []
         for wallet in wallets:
@@ -68,24 +67,17 @@ def cex_checkout():
                     for transfer in data:
                         if transfer["to_address"] not in wallets:
                             futures.append(executor.submit(wallet_checkout, transfer["to_address"]))
-                    # results = [future.result() for future in futures]
-        # results = [future.result() for future in futures]
     return
 
-# analyze the transfers of wallet until the desired block_time is reached
 def wallet_checkout(wallet):
-    # could make this call more specific ex: only transactions in the range of the time offset
     api_call = "https://pro-api.solscan.io/v2.0/account/transfer?address=" + wallet + "&activity_type[]=" + DEX_ACTIVITY_TYPE + "&page=1&page_size=" + str(DEX_PG_SZ)
     response = requests.get(api_call, headers=headers)
     if not response:
         raise Exception(f"Non-success status code: {response.status_code}")
     data = response.json()["data"]
-    # gets rid of day traders, could check to see if wallet has sold and add it if not
     if len(data) > 99:
         return
-    # reverse data
     data = data[::-1]
-    # traverse data and look for transfers of Solana greater than 4.9
     tid = "n/a"
     for transfer in data:
         if transfer["token_address"] == NATIVE_SOLANA and transfer["flow"] == "out" and transfer["amount"] / 10 ** transfer["token_decimals"] > MIN_SOL_BUY:
@@ -105,11 +97,9 @@ if __name__ == "__main__":
     end_time = time.time()
     print(potential_insider_tokens)
     print(end_time - start_time)
-    # set up Flask to view data better
     @app.route("/")
     def display_data():
         output = dict(sorted(potential_insider_tokens.items(), key=lambda item: item[1], reverse=True))
-        # Render the data as a pretty-printed JSON string
         html_content = """
         <html>
         <body>

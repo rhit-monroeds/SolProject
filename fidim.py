@@ -11,12 +11,7 @@ MIN_SOL = 9
 potential_insider_tokens = {}
 insider_wallets = defaultdict(list)
 bt = (datetime.now() - timedelta(hours=24)).timestamp()
-# Set the Solana RPC endpoint
 solana_endpoint = 'https://nd-923-390-846.p2pify.com/39df60dcfd8e7e0dd597695da0d2d97d'
-
-# solana_endpoint = 'https://go.getblock.io/ecd992c1da5a4a8dbe09b990b58281af'
-# solana_endpoint = 'https://solana-mainnet.core.chainstack.com/9f3e3bae8b45fc1b63d8eebe29c3b12b'
-# sender_address = 'ASTyfSima4LLAdDgoFGkgqoKowG1LZFDr9fAQrg7iaJZ'
 
 # tokens to ignore
 # wrapped Sol, WIF, POPCAT, MEW, PONKE, $michi, WOLF, BILLY, aura, FWOG, PGN, wDOG, MUMU, DOG, MOTHER, SCF, GINNAN, DADDY, USDC, DMAGA, NEIRO, $WIF, Jupiter, Jupiter, BTW, USDT, NOS, JitoSOL, NUGGIES, UWU, Jupiter, Neiro, mSOL
@@ -39,13 +34,8 @@ binance_2 = "5tzFkiKscXHK5ZXCGbXZxdw7gTjjD1mBwuoFbhUvuAi9"
 kucoin = "BmFdpraQhkiDQE6SnfG5omcA1VwzqfXrwtNYBwWTymy6"
 wallets = [random_1, random_2, cb_hot, cb_1, cb_2, bybit, binance_2, kucoin]
 
-
-# before should start as no value so that it is the most recent block
-# then it should update to the oldest transaction signature that was returned
-#
-# until should start as a transaction signature from ~24hr ago and stay there
 def get_signatures_for_address(address, before=None):
-    limit = 1000  # Max limit per request
+    limit = 1000 
     headers = {'Content-Type': 'application/json'}
     params = {
         "limit": limit,
@@ -91,17 +81,15 @@ def analyze_transactions(address):
     while not done:
         signatures = get_signatures_for_address(address, last_signature)
         if not signatures:
-            break  # No more transactions to fetch
+            break 
 
         for signature_data in signatures:
             transaction_detail = get_transaction_details(signature_data['signature'])
-            # print("transaction detail")
-            # print(transaction_detail)
             transaction = transaction_detail.get('transaction', {})
             message = transaction.get('message', {})
 
             for instruction in message.get('instructions', []):
-                if instruction.get('programId') == '11111111111111111111111111111111':  # Check for system program
+                if instruction.get('programId') == '11111111111111111111111111111111': 
                     parsed = instruction.get('parsed', {})
                     if parsed.get('type') == 'transfer':
                         info = parsed.get('info', {})
@@ -110,14 +98,13 @@ def analyze_transactions(address):
                             print({'recipient': info['destination'], 'amount': sols, 'signature': signature_data['signature']}, bt, transaction_detail.get('blockTime'))
                             sol_transfers.append({'recipient': info['destination'], 'amount': sols, 'signature': signature_data['signature']})
             
-            last_signature = signature_data['signature']  # Update to fetch the next batch
+            last_signature = signature_data['signature'] 
             block_time = transaction_detail.get('blockTime')
             if block_time < bt:
                 done = 1
 
     return sol_transfers
 
-# Running the analysis and printing the results
 for wallet in wallets:
     print("analyzing " + wallet)
     results = analyze_transactions(wallet)

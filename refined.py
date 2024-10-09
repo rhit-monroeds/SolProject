@@ -68,9 +68,7 @@ def wallet_checkout(wallet):
     data = response.json()["data"]
     if len(data) > 50:
         return
-    # reverse data
     data = data[::-1]
-    # traverse data and look for transfers of Solana greater than 4.9
     tid = "n/a"
     for transfer in data:
         if transfer["token_address"] == NATIVE_SOLANA and transfer["flow"] == "out" and transfer["amount"] / 10 ** transfer["token_decimals"] > (MIN_SOL - 0.1):
@@ -85,11 +83,9 @@ def wallet_checkout(wallet):
 if __name__ == "__main__":
     cex_checkout()
     print(potential_insider_tokens)
-    # set up Flask to view data better
     @app.route("/")
     def display_data():
         output = dict(sorted(potential_insider_tokens.items(), key=lambda item: item[1], reverse=True))
-        # Render the data as a pretty-printed JSON string
         html_content = """
         <html>
         <body>

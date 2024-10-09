@@ -82,7 +82,6 @@ def save_ignore_list():
         json.dump(ignore, f)
 
 def central_check():
-    # TODO these threads may be useless?
     with ThreadPoolExecutor(max_workers=3) as executor:
         futures = []
         for w in ws:
@@ -105,7 +104,6 @@ def central_check():
     return
 
 def decentral_checkout(w):
-    # TODO could make this call more specific ex: only transactions in the range of the time offset
     ac = "https://pro-api.solscan.io/v2.0/account/transfer?address=" + w + "&activity_type[]=" + DAT + "&page=1&page_size=" + str(DPGS)
     response = requests.get(ac, headers=headers)
 
@@ -158,7 +156,7 @@ def load_ignore_list():
         with open('ignore_list.json', 'r') as f:
             ignore = json.load(f)
     except FileNotFoundError:
-        # If the file doesn't exist, use the default ignore list
+        # if the file doesn't exist, use the default ignore list
         pass
 
 def update_data():
@@ -169,7 +167,7 @@ def update_data():
     print("Update completed in", end_time - start_time, "seconds")
     print(potential_insider_tokens)
     
-    # Update the latest results
+    # update the latest results
     latest_potential_insider_tokens = dict(potential_insider_tokens)
     latest_token_info_cache = dict(token_info_cache)
     latest_insider_wallets = {k: set(v) for k, v in insider_wallets.items()}
@@ -177,10 +175,10 @@ def update_data():
     last_update_time = int(time.time())
     specific_time = datetime.fromtimestamp(last_update_time)
 
-    # Check for new tokens and send notifications
+    # check for new tokens and send notifications
     for token, count in latest_potential_insider_tokens.items():
 
-        # Check for increase in insider wallets
+        # check for increase in insider wallets
         current_iw_count = len(latest_insider_wallets.get(token, set()))
         previous_iw_count = previous_insider_wallet_counts.get(token, 0)
 
@@ -190,10 +188,10 @@ def update_data():
         elif token in notified_tokens and current_iw_count > previous_iw_count:
             send_iw_increase_notification(token, previous_iw_count, current_iw_count)
         
-        # Update the previous count for the next iteration
+        # update the previous count for the next iteration
         previous_insider_wallet_counts[token] = current_iw_count
     
-    # Clear the temporary data for the next run
+    # clear the temporary data for the next run
     potential_insider_tokens.clear()
     token_info_cache.clear()
     insider_wallets.clear()
@@ -221,7 +219,7 @@ def send_iw_increase_notification(token, previous_count, current_count):
                f"DexScreener: {dexscreener_link}")
     send_telegram_message_sync(message)
 
-# Set up the scheduler
+# set up the scheduler
 scheduler = BackgroundScheduler()
 scheduler.add_job(func=update_data, trigger="interval", minutes=10)
 scheduler.start()
@@ -302,13 +300,13 @@ if __name__ == "__main__":
     load_ignore_list()
     update_data()
 
-    # Set up the Telegram bot
+    # set up the Telegram bot
     application = ApplicationBuilder().token('your-token').build()
     
-    # Add command handlers
+    # add command handlers
     application.add_handler(CommandHandler("add", add_token_to_ignore))
     
-    # Start the bot
+    # start the bot
     application.run_polling()
 
     app.run(debug=False)

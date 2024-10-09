@@ -12,12 +12,6 @@ from telegram.error import TelegramError
 
 app = Flask(__name__)
 
-# TODO
-# make it so i receive another update when the number of iws increases
-# track a specific wallet and sell when they do
-# different version where keep a list of wallets that have transfered for past 24 hours and check them all for purchases in the past 1-4 hours
-# send telegram message to start/end remotely, will have to run perpetually and is just idle until the message is sent
-
 # Constants
 CAT = "ACTIVITY_SPL_TRANSFER"
 CPGS = 100
@@ -71,7 +65,6 @@ okx = "5VCwKtCXgCJ6kit5FybXjvriW3xELsFDhYrPSqtJNmcD"
 ws = [r_1, r_2, cb_hot, cb_1, cb_2, bbit, binan_2, kuc, okx]
 
 def central_check():
-    # TODO these threads may be useless?
     with ThreadPoolExecutor(max_workers=2) as executor:
         futures = []
         for w in ws:
@@ -94,19 +87,15 @@ def central_check():
     return
 
 def decentral_checkout(w):
-    # TODO could make this call more specific ex: only transactions in the range of the time offset
     ac = "https://pro-api.solscan.io/v2.0/account/transfer?address=" + w + "&activity_type[]=" + DAT + "&page=1&page_size=" + str(DPGS)
     response = requests.get(ac, headers=headers)
 
     if not response:
         raise Exception(f"Non-success status code: {response.status_code}")
     data = response.json()["data"]
-    # TODO gets rid of day traders, could check to see if wallet has sold and add it if not
     if len(data) > 99:
         return
-    # reverse data
     data = data[::-1]
-    # traverse data and look for transfers of Solana greater than 4.9
     tid = "n/a"
     for transaction in data:
         if (transaction["token_address"] == NS or transaction["token_address"] == WS) and transaction["flow"] == "out" and transaction["amount"] / 10 ** transaction["token_decimals"] > MSB:
@@ -147,7 +136,6 @@ def update_data():
     end_time = time.time()
     print("Update completed in", end_time - start_time, "seconds")
     
-    # Update the latest results
     latest_potential_insider_tokens = dict(potential_insider_tokens)
     latest_token_info_cache = dict(token_info_cache)
     latest_insider_wallets = {k: set(v) for k, v in insider_wallets.items()}
@@ -155,7 +143,6 @@ def update_data():
     last_update_time = int(time.time())
     specific_time = datetime.fromtimestamp(last_update_time)
 
-    # Check for new tokens and send notifications
     for token, count in latest_potential_insider_tokens.items():
         if token not in notified_tokens and count >= LIMIT:
             token_info = latest_token_info_cache.get(token, {})
@@ -169,12 +156,10 @@ def update_data():
             send_telegram_message_sync(message)
             notified_tokens.add(token)
     
-    # Clear the temporary data for the next run
     potential_insider_tokens.clear()
     token_info_cache.clear()
     insider_wallets.clear()
 
-# Set up the scheduler
 scheduler = BackgroundScheduler()
 scheduler.add_job(func=update_data, trigger="interval", minutes=12)
 scheduler.start()
